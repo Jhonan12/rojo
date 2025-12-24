@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Ruleta Europea - Pronóstico</title>
+
+<style>
+body{
+  background:#0f172a;
+  font-family:Arial, sans-serif;
+  color:#e5e7eb;
+  padding:20px;
+}
+.container{
+  max-width:600px;
+  margin:auto;
+  background:#020617;
+  padding:20px;
+  border-radius:10px;
+}
+h1{text-align:center;color:#38bdf8}
+textarea{
+  width:100%;
+  height:140px;
+  font-size:16px;
+  padding:12px;
+  border-radius:6px;
+  margin-bottom:10px;
+}
+button{
+  width:100%;
+  padding:12px;
+  font-size:16px;
+  background:#22c55e;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+button:hover{background:#16a34a}
+.box{
+  background:#020617;
+  margin-top:15px;
+  padding:12px;
+  border-radius:6px;
+}
+.alerta{
+  text-align:center;
+  font-weight:bold;
+  padding:14px;
+  border-radius:6px;
+  font-size:18px;
+}
+.jugar{background:#16a34a}
+.nojugar{background:#dc2626}
+.progress{
+  width:100%;
+  height:18px;
+  background:#1e293b;
+  border-radius:10px;
+  overflow:hidden;
+}
+.progress-bar{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#22c55e,#38bdf8);
+  transition:.4s;
+}
+#nivelTexto{text-align:center;margin-top:6px;font-weight:bold}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h1>🎰 Ruleta Europea</h1>
+
+<textarea id="input"
+placeholder="Ingresa UN número por línea (0–36)
+Ejemplo:
+0
+9
+28
+25
+1"></textarea>
+
+<button onclick="analizar()">Analizar</button>
+
+<div class="box">
+<b>Números analizados:</b>
+<p id="historial">—</p>
+</div>
+
+<div class="box">
+<b>Nivel de análisis</b>
+<div class="progress">
+  <div id="barra" class="progress-bar"></div>
+</div>
+<div id="nivelTexto">Nivel bajo</div>
+</div>
+
+<div class="box">
+<b>Pronóstico</b>
+<div id="alerta" class="alerta">Esperando datos…</div>
+</div>
+
+</div>
+
+<script>
+// Colores oficiales de la ruleta europea
+const NEGROS = [2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35];
+
+function analizar(){
+  const texto = document.getElementById("input").value.trim();
+  if(!texto) return;
+
+  const historial = texto
+    .split("\n")
+    .map(n => parseInt(n.trim()))
+    .filter(n => !isNaN(n) && n >= 0 && n <= 36);
+
+  document.getElementById("input").value = "";
+  document.getElementById("historial").innerText = historial.join(", ");
+
+  actualizarNivel(historial.length);
+
+  const alerta = document.getElementById("alerta");
+
+  // 🔒 SOLO PRONOSTICAR DESPUÉS DE 8 NÚMEROS
+  if(historial.length < 8){
+    alerta.className = "alerta nojugar";
+    alerta.innerText = "⏳ ESPERANDO MÍNIMO 8 NÚMEROS";
+    return;
+  }
+
+  // Analiza SOLO los últimos 7
+  pronosticar(historial.slice(-7));
+}
+
+function actualizarNivel(n){
+  const barra = document.getElementById("barra");
+  const texto = document.getElementById("nivelTexto");
+
+  if(n < 8){
+    barra.style.width = "15%";
+    texto.innerText = "Nivel bajo";
+    texto.style.color = "#f87171";
+  } else if(n < 12){
+    barra.style.width = "60%";
+    texto.innerText = "Nivel medio";
+    texto.style.color = "#facc15";
+  } else {
+    barra.style.width = "100%";
+    texto.innerText = "🔥 NIVEL SUPERIOR 🔥";
+    texto.style.color = "#22c55e";
+  }
+}
+
+function pronosticar(nums){
+  let negrosBajos = 0;
+  let negrosAltos = 0;
+
+  nums.forEach(n=>{
+    if(NEGROS.includes(n)){
+      if(n <= 17) negrosBajos++;
+      else negrosAltos++;
+    }
+  });
+
+  const alerta = document.getElementById("alerta");
+  const totalNegros = negrosBajos + negrosAltos;
+
+  if(totalNegros < 3){
+    alerta.className = "alerta nojugar";
+    alerta.innerText = "❌ SIN DATOS SUFICIENTES";
+    return;
+  }
+
+  const pBajos = Math.round((negrosBajos / totalNegros) * 100);
+  const pAltos = Math.round((negrosAltos / totalNegros) * 100);
+
+  if(Math.abs(pBajos - pAltos) >= 20){
+    alerta.className = "alerta jugar";
+    alerta.innerText =
+      `✅ JUGAR A ${pBajos > pAltos ? "NEGROS BAJOS" : "NEGROS ALTOS"} (${Math.max(pBajos,pAltos)}%)`;
+  } else {
+    alerta.className = "alerta nojugar";
+    alerta.innerText = "❌ SIN VENTAJA CLARA";
+  }
+}
+</script>
+
+</body>
+</html>
